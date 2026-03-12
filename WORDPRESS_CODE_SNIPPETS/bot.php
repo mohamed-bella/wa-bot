@@ -7,7 +7,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /* ── CONFIG ── */
-if ( ! defined( 'BASMA_BOT_URL' ) )     define( 'BASMA_BOT_URL',     'https://996b-2a01-4f9-c013-e885-00-1.ngrok-free.app' );
+if ( ! defined( 'BASMA_BOT_URL' ) )     define( 'BASMA_BOT_URL',     'http://77.42.43.52:3000' );
 if ( ! defined( 'BASMA_BOT_API_KEY' ) ) define( 'BASMA_BOT_API_KEY', 'basma_api_secret_2024' );
 if ( ! defined( 'BASMA_BOT_PHONE' ) )   define( 'BASMA_BOT_PHONE',   '212704969534' );
 
