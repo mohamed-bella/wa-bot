@@ -73,4 +73,43 @@ router.post('/confirmation', async (req, res) => {
     }
 });
 
+// Route: POST /api/send-message
+// Legacy-compatible endpoint used by WordPress bot.php (basma_bot_send_message function).
+// Accepts { phone, message } and sends a plain text WhatsApp message.
+router.post('/send-message', async (req, res) => {
+    const { phone, message } = req.body;
+
+    if (!phone || !message) {
+        return res.status(400).json({ success: false, error: 'phone and message are required' });
+    }
+
+    const data = {
+        messaging_product: 'whatsapp',
+        to: phone,
+        type: 'text',
+        text: { body: message }
+    };
+
+    try {
+        console.log(`[send-message] Sending to ${phone}`);
+        const response = await axios({
+            method: 'POST',
+            url: `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+            data: data,
+            headers: {
+                'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log(`[send-message] Sent to ${phone}. Message ID: ${response.data.messages[0].id}`);
+        res.status(200).json({ success: true, message: 'Message sent' });
+
+    } catch (error) {
+        console.error('[send-message] Error:', error.response ? JSON.stringify(error.response.data, null, 2) : error.message);
+        res.status(500).json({ success: false, error: 'Failed to send WhatsApp message' });
+    }
+});
+
 module.exports = router;
+
