@@ -18,43 +18,50 @@ router.post('/confirmation', async (req, res) => {
 
     // Sanitize values for use in button IDs:
     // WhatsApp only allows alphanumeric, hyphens, and underscores in button IDs.
-    // Spaces or special characters will silently break the buttons.
     const safeOrder = String(order).replace(/[^a-zA-Z0-9]/g, '-');
     const safeName  = String(name).replace(/[^a-zA-Z0-9]/g, '-');
 
-    // Build an interactive button message (WhatsApp Cloud API format)
-    // Button IDs encode the order number and name so the webhook handler can parse them
+    // Use a pre-approved WhatsApp Template message.
+    // This is REQUIRED for business-initiated conversations (e.g. sending on order placement).
+    // Regular interactive messages only work inside an active 24-hour customer-service window.
+    //
+    // ⚙️  Template name must match EXACTLY what you created in Meta WhatsApp Manager.
+    //     Change 'order_confirmation' below if you used a different name.
+    const TEMPLATE_NAME = 'order_confirmation';
+    const TEMPLATE_LANG = 'fr'; // Set to 'en' if you created the template in English
+
     const data = {
         messaging_product: 'whatsapp',
         to: phone,
-        type: 'interactive',
-        interactive: {
-            type: 'button',
-            body: {
-                text: `🛒 *Nouvelle Commande #${order}*\n\nBonjour *${name}*,\n\nNous avons bien reçu votre commande. Veuillez confirmer votre commande ci-dessous.`
-            },
-            footer: {
-                text: 'Merci de votre confiance ❤️'
-            },
-            action: {
-                buttons: [
-                    {
-                        type: 'reply',
-                        reply: {
-                            // ID uses sanitized values (no spaces/special chars - WhatsApp requirement)
-                            id: `confirm-${safeOrder}-${safeName}`,
-                            title: 'Je confirme'
-                        }
-                    },
-                    {
-                        type: 'reply',
-                        reply: {
-                            id: `cancel-${safeOrder}-${safeName}`,
-                            title: 'Non, Desole'
-                        }
-                    }
-                ]
-            }
+        type: 'template',
+        template: {
+            name: TEMPLATE_NAME,
+            language: { code: TEMPLATE_LANG },
+            components: [
+                {
+                    // Fills in the {{1}} and {{2}} variables in your template body
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: String(order) },  // {{1}} = orderNumber
+                        { type: 'text', text: String(name) }    // {{2}} = customerName
+                    ]
+                },
+                {
+                    // Encodes the button IDs for the quick-reply buttons in the template.
+                    // When the customer taps a button, WhatsApp fires a button_reply webhook
+                    // with the payload below — index.js already handles this correctly.
+                    type: 'button',
+                    sub_type: 'quick_reply',
+                    index: '0',
+                    parameters: [{ type: 'payload', payload: `confirm-${safeOrder}-${safeName}` }]
+                },
+                {
+                    type: 'button',
+                    sub_type: 'quick_reply',
+                    index: '1',
+                    parameters: [{ type: 'payload', payload: `cancel-${safeOrder}-${safeName}` }]
+                }
+            ]
         }
     };
 

@@ -205,10 +205,13 @@ async function sendTextMessage(to, text) {
     }
 }
 
-// Import the external API router
+// Import the external API routers
 const confirmationRoute = require('./api/Confirmation');
-// Use the router for endpoints under /api
+const iptvRoute        = require('./api/IPTV');
+
+// Use the routers for endpoints under /api
 app.use('/api', confirmationRoute);
+app.use('/api', iptvRoute);
 
 // Serve the documentation HTML file at /api/docs
 const path = require('path');
