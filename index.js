@@ -78,9 +78,9 @@ app.post('/webhook', async (req, res) => {
             // ── Handle interactive button replies (customer tapped a confirmation button) ──
             } else if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
                 const buttonId = message.interactive.button_reply.id;
-                // Button IDs are formatted as: "confirm_ORDER_NAME" or "cancel_ORDER_NAME"
-                const parts = buttonId.split('_');
-                const action = parts[0];         // "confirm" or "cancel"
+                // Button IDs are formatted as: "confirm-ORDER-NAME" or "cancel-ORDER-NAME"
+                const parts = buttonId.split('-');
+                const action = parts[0];           // "confirm" or "cancel"
                 const orderNumber = parts[1] || 'N/A';
                 const customerName = parts.slice(2).join(' ') || 'Client';
 

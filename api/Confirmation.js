@@ -16,6 +16,12 @@ router.post('/confirmation', async (req, res) => {
     const name = customerName || 'Client';
     const order = orderNumber || 'N/A';
 
+    // Sanitize values for use in button IDs:
+    // WhatsApp only allows alphanumeric, hyphens, and underscores in button IDs.
+    // Spaces or special characters will silently break the buttons.
+    const safeOrder = String(order).replace(/[^a-zA-Z0-9]/g, '-');
+    const safeName  = String(name).replace(/[^a-zA-Z0-9]/g, '-');
+
     // Build an interactive button message (WhatsApp Cloud API format)
     // Button IDs encode the order number and name so the webhook handler can parse them
     const data = {
@@ -35,16 +41,16 @@ router.post('/confirmation', async (req, res) => {
                     {
                         type: 'reply',
                         reply: {
-                            // ID encodes orderNumber and customerName so the webhook can read it
-                            id: `confirm_${order}_${name}`,
-                            title: '✅ Je confirme'
+                            // ID uses sanitized values (no spaces/special chars - WhatsApp requirement)
+                            id: `confirm-${safeOrder}-${safeName}`,
+                            title: 'Je confirme'
                         }
                     },
                     {
                         type: 'reply',
                         reply: {
-                            id: `cancel_${order}_${name}`,
-                            title: '❌ Non, Désolé'
+                            id: `cancel-${safeOrder}-${safeName}`,
+                            title: 'Non, Desole'
                         }
                     }
                 ]
