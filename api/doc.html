@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot API Documentation</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f6f9; color: #333; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { color: #128C7E; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; }
+        h2 { color: #25D366; margin-top: 30px; }
+        pre { background-color: #1e293b; padding: 15px; border-radius: 6px; overflow-x: auto; color: #f8fafc; font-size: 14px; }
+        code { font-family: 'Fira Code', Consolas, monospace; }
+        .inline-code { background-color: #f1f5f9; color: #db2777; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        .endpoint { font-size: 1.2em; font-weight: bold; padding: 12px; background-color: #dcf8c6; border-left: 5px solid #25D366; margin-bottom: 20px; border-radius: 0 4px 4px 0;}
+        .method { color: #fff; background-color: #25D366; padding: 4px 10px; border-radius: 4px; font-size: 0.9em; margin-right: 12px; text-transform: uppercase;}
+        ul { background: #f8fafc; padding: 15px 15px 15px 35px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WhatsApp Bot API</h1>
+        <p>This documentation explains how to use the external API endpoints to trigger automated WhatsApp messages from your website, CMS, or other external applications.</p>
+        
+        <h2>Send Order Confirmation</h2>
+        <div class="endpoint">
+            <span class="method">POST</span> /api/confirmation
+        </div>
+        
+        <p>Use this endpoint to send a WhatsApp order confirmation to a customer automatically after they place an order on your website.</p>
+        
+        <h3>Required Headers</h3>
+        <pre><code>Content-Type: application/json</code></pre>
+        
+        <h3>Request Body (JSON)</h3>
+        <p>The request body must be a JSON object containing the following parameters:</p>
+        <ul>
+            <li><strong>phone (Required)</strong>: The customer's absolute phone number, including the country code without plus or symbols (e.g., <span class="inline-code">"212704969534"</span>).</li>
+            <li><strong>customerName (Optional)</strong>: The name of the customer to personalize the message.</li>
+            <li><strong>orderNumber (Optional)</strong>: The unique identifier/ID for the order.</li>
+        </ul>
+        
+        <h3>Example Request (JavaScript / Client-side)</h3>
+        <pre><code>fetch('https://996b-2a01-4f9-c013-e885-00-1.ngrok-free.app/api/confirmation', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        phone: "212704969534",
+        customerName: "Mohamed Bella",
+        orderNumber: "ORD-98765"
+    })
+})
+.then(res => res.json())
+.then(data => console.log('Response:', data));</code></pre>
+
+        <h3>Example Successful Response</h3>
+        <pre><code>{
+    "success": true,
+    "message": "WhatsApp message sent to client"
+}</code></pre>
+
+        <h3>Example Error Response (Missing Phone)</h3>
+        <pre><code>{
+    "success": false,
+    "error": "Phone number is required"
+}</code></pre>
+    </div>
+</body>
+</html>

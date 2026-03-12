@@ -185,6 +185,17 @@ async function sendTextMessage(to, text) {
     }
 }
 
+// Import the external API router
+const confirmationRoute = require('./api/Confirmation');
+// Use the router for endpoints under /api
+app.use('/api', confirmationRoute);
+
+// Serve the documentation HTML file at /api/docs
+const path = require('path');
+app.get('/api/docs', (req, res) => {
+    res.sendFile(path.join(__dirname, 'api', 'doc.html'));
+});
+
 // Start the Express server
 app.listen(PORT, () => {
     console.log(`WhatsApp Bot server is listening on port ${PORT}`);
