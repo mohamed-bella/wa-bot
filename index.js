@@ -44,8 +44,6 @@ app.get('/webhook', (req, res) => {
 // POST endpoint to handle incoming WhatsApp messages
 app.post('/webhook', async (req, res) => {
     // Return early with a 200 OK so WhatsApp doesn't retry delivering the payload
-    // Normally we could do this at the end, but in case of long-running operations we want to send it immediately.
-    // However, WhatsApp requires a 200 OK response within a reasonable time.
     res.sendStatus(200);
 
     // Parse the request body
@@ -53,7 +51,6 @@ app.post('/webhook', async (req, res) => {
 
     // Check if this is an event from a WhatsApp API
     if (body.object === 'whatsapp_business_account') {
-        // WhatsApp messages usually come nested inside an array
         if (
             body.entry &&
             body.entry[0].changes &&
@@ -65,25 +62,48 @@ app.post('/webhook', async (req, res) => {
             const message = value.messages[0];
             const from = message.from; // The user's WhatsApp number
 
-            // Bonus requirement: Log incoming messages to the console
+            // Log all incoming messages to the console
             console.log(`Incoming message from ${from}:`, JSON.stringify(message, null, 2));
 
-            // Only handle text messages for this example
+            // ── Handle plain text messages ──
             if (message.type === 'text') {
                 const incomingText = message.text.body.toLowerCase().trim();
 
-                // Check if the user sent "menu" to trigger the interactive list message
                 if (incomingText === 'menu') {
-                    // Send an interactive list message individually to the sender
                     await sendInteractiveMenu(from);
                 } else {
-                    // Provide a default fallback if they did not type "menu"
-                    await sendTextMessage(from, 'Hello! Reply with "menu" to see the available options.');
+                    await sendTextMessage(from, 'Bonjour! Répondez avec "menu" pour voir les options disponibles.');
+                }
+
+            // ── Handle interactive button replies (customer tapped a confirmation button) ──
+            } else if (message.type === 'interactive' && message.interactive.type === 'button_reply') {
+                const buttonId = message.interactive.button_reply.id;
+                // Button IDs are formatted as: "confirm_ORDER_NAME" or "cancel_ORDER_NAME"
+                const parts = buttonId.split('_');
+                const action = parts[0];         // "confirm" or "cancel"
+                const orderNumber = parts[1] || 'N/A';
+                const customerName = parts.slice(2).join(' ') || 'Client';
+
+                // Owner phone number to notify (without + prefix)
+                const OWNER_PHONE = '212704969534';
+
+                if (action === 'confirm') {
+                    // 1. Confirm with the customer
+                    await sendTextMessage(from, `✅ Parfait! Votre commande *#${orderNumber}* est confirmée.\nNous vous contacterons bientôt pour la livraison. Merci!`);
+                    // 2. Notify the owner
+                    await sendTextMessage(OWNER_PHONE, `✅ *Commande CONFIRMÉE*\n\n*Commande:* #${orderNumber}\n*Client:* ${customerName}\n*Téléphone:* +${from}`);
+
+                } else if (action === 'cancel') {
+                    // 1. Acknowledge the customer
+                    await sendTextMessage(from, `❌ D'accord, votre commande *#${orderNumber}* a été annulée.\nN'hésitez pas à nous recontacter si vous changez d'avis!`);
+                    // 2. Notify the owner
+                    await sendTextMessage(OWNER_PHONE, `❌ *Commande ANNULÉE*\n\n*Commande:* #${orderNumber}\n*Client:* ${customerName}\n*Téléphone:* +${from}`);
                 }
             }
         }
     }
 });
+
 
 // Helper function to send an interactive list message
 async function sendInteractiveMenu(to) {

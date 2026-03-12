@@ -3,6 +3,8 @@ const router = express.Router();
 const axios = require('axios');
 
 // Route: POST /api/confirmation
+// Called by your website when a customer places an order.
+// Sends the customer an interactive WhatsApp message with 2 buttons to confirm or cancel.
 router.post('/confirmation', async (req, res) => {
     const { phone, customerName, orderNumber } = req.body;
 
@@ -11,20 +13,47 @@ router.post('/confirmation', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Phone number is required' });
     }
 
-    // Compose the message you want to send to the client
-    const message = `Hello ${customerName || 'Customer'}!\n\nThank you for your order (Order #${orderNumber || 'Pending'}).\nWe have received your request and are processing it now! ✅`;
+    const name = customerName || 'Client';
+    const order = orderNumber || 'N/A';
 
-    // Format WhatsApp message payload
+    // Build an interactive button message (WhatsApp Cloud API format)
+    // Button IDs encode the order number and name so the webhook handler can parse them
     const data = {
         messaging_product: 'whatsapp',
         to: phone,
-        type: 'text',
-        text: { body: message }
+        type: 'interactive',
+        interactive: {
+            type: 'button',
+            body: {
+                text: `🛒 *Nouvelle Commande #${order}*\n\nBonjour *${name}*,\n\nNous avons bien reçu votre commande. Veuillez confirmer votre commande ci-dessous.`
+            },
+            footer: {
+                text: 'Merci de votre confiance ❤️'
+            },
+            action: {
+                buttons: [
+                    {
+                        type: 'reply',
+                        reply: {
+                            // ID encodes orderNumber and customerName so the webhook can read it
+                            id: `confirm_${order}_${name}`,
+                            title: '✅ Je confirme'
+                        }
+                    },
+                    {
+                        type: 'reply',
+                        reply: {
+                            id: `cancel_${order}_${name}`,
+                            title: '❌ Non, Désolé'
+                        }
+                    }
+                ]
+            }
+        }
     };
 
     try {
-        console.log(`Sending API order confirmation to ${phone}`);
-        // Send actual message using axios
+        console.log(`Sending interactive confirmation to ${phone} for order #${order}`);
         const response = await axios({
             method: 'POST',
             url: `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
@@ -34,14 +63,12 @@ router.post('/confirmation', async (req, res) => {
                 'Content-Type': 'application/json'
             }
         });
-        
-        console.log(`Successfully sent order confirmation to ${phone}. Message ID: ${response.data.messages[0].id}`);
-        
-        // Respond back to your website that the request was handled successfully
-        res.status(200).json({ success: true, message: 'WhatsApp message sent to client' });
-        
+
+        console.log(`Successfully sent confirmation buttons to ${phone}. Message ID: ${response.data.messages[0].id}`);
+        res.status(200).json({ success: true, message: 'Interactive confirmation sent to client' });
+
     } catch (error) {
-        console.error('Error sending order confirmation message:', error.response ? JSON.stringify(error.response.data, null, 2) : error.message);
+        console.error('Error sending confirmation:', error.response ? JSON.stringify(error.response.data, null, 2) : error.message);
         res.status(500).json({ success: false, error: 'Failed to send WhatsApp message' });
     }
 });
